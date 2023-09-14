@@ -510,23 +510,19 @@ def diff_objects(
     result["before"] = diff[0]
     result["after"] = diff[1]
 
-    if list(result["after"].keys()) != ["metadata"] or list(
+    if list(result["after"].keys()) == ["metadata"] and list(
         result["before"].keys()
-    ) != ["metadata"]:
-        return False, result
+    ) == ["metadata"]:
+        # If only metadata.generation and metadata.resourceVersion changed, ignore it
+        ignored_keys = set(["generation", "resourceVersion"])
 
-    # If only metadata.generation and metadata.resourceVersion changed, ignore it
-    ignored_keys = set(["generation", "resourceVersion"])
-
-    if not set(result["after"]["metadata"].keys()).issubset(ignored_keys):
-        return False, result
-    if not set(result["before"]["metadata"].keys()).issubset(ignored_keys):
-        return False, result
+        if set(result["after"]["metadata"].keys()).issubset(ignored_keys) and set(result["before"]["metadata"].keys()).issubset(ignored_keys):
+            return True, result
 
     result["before"] = hide_fields(result["before"], hidden_fields)
     result["after"] = hide_fields(result["after"], hidden_fields)
 
-    return True, result
+    return False, result
 
 
 def hide_fields(definition: dict, hidden_fields: Optional[list]) -> dict:
